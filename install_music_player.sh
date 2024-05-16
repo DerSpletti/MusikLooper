@@ -11,9 +11,6 @@ sudo mkdir /media/usb
 # Die UUID des USB-Sticks herausfinden und ersetzen (durch `blkid` ermittelbar)
 echo "UUID=deine-uuid /media/usb vfat defaults,auto,users,rw,nofail 0 0" | sudo tee -a /etc/fstab
 
-# System neu starten, um den USB-Stick automatisch einzubinden
-sudo reboot
-
 # Nach dem Neustart wird das folgende Skript automatisch ausgeführt:
 # Musikwiedergabe-Skript
 cat <<EOF | sudo tee /usr/local/bin/play_music.sh
@@ -32,3 +29,6 @@ sudo chmod +x /usr/local/bin/play_music.sh
 
 # Einrichten eines Crontab-Eintrags, um das Musikwiedergabe-Skript beim Booten zu starten
 (crontab -l 2>/dev/null; echo "@reboot /usr/local/bin/play_music.sh") | crontab -
+
+# System neu starten, um den USB-Stick automatisch einzubinden
+sudo reboot
