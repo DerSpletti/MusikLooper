@@ -5,12 +5,26 @@ sudo apt-get update
 sudo apt-get install -y mpd mpc
 
 # Erstellen eines Mountpunktes für den USB-Stick
-sudo mkdir /media/usb
+sudo mkdir -p /media/usb
 
-# Einbinden des USB-Sticks
-# Hinweis: Ersetzen Sie 'deine-uuid' durch die tatsächliche UUID des USB-Sticks.
-# Die UUID kann mit dem Befehl `sudo blkid` ermittelt werden.
-echo "UUID=deine-uuid /media/usb auto defaults,auto,users,rw,nofail,x-systemd.automount 0 0" | sudo tee -a /etc/fstab
+# Automatisches Finden der UUID des USB-Sticks
+# Hinweis: Dies setzt voraus, dass nur ein USB-Speichergerät angeschlossen ist.
+# Prüfen, ob eine Partition vorhanden ist oder nicht
+DEVICE="/dev/sda"  # Gerätebasispfad
+PARTITION=$(lsblk -no NAME $DEVICE | grep -o '^sda[0-9]')
+if [ -z "$PARTITION" ]; then
+    UUID=$(lsblk -no UUID $DEVICE)
+else
+    UUID=$(lsblk -no UUID /dev/$PARTITION)
+fi
+
+if [ -z "$UUID" ]; then
+  echo "Kein USB-Stick gefunden. Bitte stellen Sie sicher, dass der Stick eingesteckt ist und versuchen Sie es erneut."
+  exit 1
+fi
+
+# Einbinden des USB-Sticks in die fstab
+echo "UUID=$UUID /media/usb auto defaults,auto,users,rw,nofail,x-systemd.automount 0 0" | sudo tee -a /etc/fstab
 
 # Konfiguration von MPD
 sudo sed -i '/music_directory/c\music_directory "/media/usb"' /etc/mpd.conf
@@ -38,5 +52,5 @@ sudo chmod +x /usr/local/bin/play_music.sh
 # Einrichten eines Crontab-Eintrags, um das Musikwiedergabe-Skript beim Booten zu starten
 (crontab -l 2>/dev/null; echo "@reboot /usr/local/bin/play_music.sh") | crontab -
 
-# Jetzt können Sie das System neu starten, um die Änderungen wirksam zu machen
+# Ausgabe der Erfolgsmeldung
 echo "Installation abgeschlossen. Bitte starten Sie das System neu, um die Musikwiedergabe zu starten."
