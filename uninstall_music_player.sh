@@ -17,5 +17,11 @@ sudo rm -f /usr/local/bin/play_music.sh
 # Entfernen des Crontab-Eintrags
 (crontab -l | grep -v '/usr/local/bin/play_music.sh') | crontab -
 
+# Wiederherstellen der Original-MPD-Konfiguration
+sudo sed -i '/music_directory/c\music_directory "/var/lib/mpd/music"' /etc/mpd.conf
+
 # Optionale Bereinigung: Entfernen nicht mehr benötigter Pakete
 sudo apt-get autoremove -y
+
+# Neustarten des Systems, um alle Änderungen wirksam zu machen (optional)
+echo "Deinstallation abgeschlossen. Es wird empfohlen, das System neu zu starten."
