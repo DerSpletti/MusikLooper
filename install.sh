@@ -2,48 +2,21 @@
 
 echo "Installing dependencies..."
 sudo apt update
-sudo apt install -y mpg123 autofs
+sudo apt install -y mpg123 udisks2
 
-echo "Configuring autofs..."
+echo "Configuring udev rules for automatic mounting..."
 
-# Suchen Sie nach dem USB-Gerät
-USB_DEVICE=$(lsblk -o NAME,TRAN | grep 'usb' | awk '{print $1}' | head -n 1)
+# Erstellen der udev-Regel
+UDEV_RULE='KERNEL=="sd*", ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", RUN+="/usr/bin/udisksctl mount -b /dev/%k"'
+echo $UDEV_RULE | sudo tee /etc/udev/rules.d/99-usb-autmount.rules
 
-# Prüfen, ob das Gerät existiert und ob es eine Partition gibt
-if lsblk | grep -q "${USB_DEVICE}1"; then
-  USB_DEVICE="${USB_DEVICE}1"
-fi
+# Anwenden der udev-Regeln
+sudo udevadm control --reload-rules
+sudo udevadm trigger
 
-# Bestätigung der Geräteerkennung
-echo "Der Stick wurde als /dev/$USB_DEVICE erkannt. Ist das richtig? (y/n)"
-read confirmation
-
-if [[ $confirmation != "y" ]]; then
-  echo "Installation abgebrochen."
-  exit 1
-fi
-
-# Debugging-Ausgaben hinzufügen
-echo "USB_DEVICE: /dev/$USB_DEVICE"
-echo "Autofs master file: /etc/auto.master"
-echo "Autofs map file: /etc/auto.usb"
-
-echo "/media/usb /etc/auto.usb --timeout=10" | sudo tee -a /etc/auto.master > /dev/null
-echo "usb1 -fstype=auto,rw,uid=pi,gid=pi :/dev/$USB_DEVICE" | sudo tee /etc/auto.usb > /dev/null
-
-# Autofs neu starten und Status überprüfen
-sudo systemctl restart autofs
-sudo systemctl status autofs
-
-# Mount-Punkt manuell testen
-sudo mkdir -p /media/usb/usb1
-sudo mount -t auto /dev/$USB_DEVICE /media/usb/usb1
-if [ $? -eq 0 ]; then
-  echo "Manual mount succeeded. Listing files:"
-  ls /media/usb/usb1
-else
-  echo "Manual mount failed."
-fi
+echo "Creating mount point and setting permissions..."
+sudo mkdir -p /media/usb
+sudo chmod 777 /media/usb
 
 echo "Setting up music player script..."
 sudo cp play_music.py /usr/local/bin/play_music.py
