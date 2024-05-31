@@ -29,11 +29,21 @@ echo "Autofs master file: /etc/auto.master"
 echo "Autofs map file: /etc/auto.usb"
 
 echo "/media/usb /etc/auto.usb --timeout=10" | sudo tee -a /etc/auto.master > /dev/null
-echo "usb1 -fstype=vfat,rw,uid=pi,gid=pi :/dev/$USB_DEVICE" | sudo tee /etc/auto.usb > /dev/null
+echo "usb1 -fstype=auto,rw,uid=pi,gid=pi :/dev/$USB_DEVICE" | sudo tee /etc/auto.usb > /dev/null
 
 # Autofs neu starten und Status überprüfen
 sudo systemctl restart autofs
 sudo systemctl status autofs
+
+# Mount-Punkt manuell testen
+sudo mkdir -p /media/usb/usb1
+sudo mount -t auto /dev/$USB_DEVICE /media/usb/usb1
+if [ $? -eq 0 ]; then
+  echo "Manual mount succeeded. Listing files:"
+  ls /media/usb/usb1
+else
+  echo "Manual mount failed."
+fi
 
 echo "Setting up music player script..."
 sudo cp play_music.py /usr/local/bin/play_music.py
