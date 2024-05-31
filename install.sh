@@ -23,9 +23,17 @@ if [[ $confirmation != "y" ]]; then
   exit 1
 fi
 
+# Debugging-Ausgaben hinzufügen
+echo "USB_DEVICE: /dev/$USB_DEVICE"
+echo "Autofs master file: /etc/auto.master"
+echo "Autofs map file: /etc/auto.usb"
+
 echo "/media/usb /etc/auto.usb --timeout=10" | sudo tee -a /etc/auto.master > /dev/null
 echo "usb1 -fstype=vfat,rw,uid=pi,gid=pi :/dev/$USB_DEVICE" | sudo tee /etc/auto.usb > /dev/null
+
+# Autofs neu starten und Status überprüfen
 sudo systemctl restart autofs
+sudo systemctl status autofs
 
 echo "Setting up music player script..."
 sudo cp play_music.py /usr/local/bin/play_music.py
