@@ -1,12 +1,16 @@
 #!/bin/bash
 
-echo "Removing music player script..."
-sudo rm /usr/local/bin/play_music.py
+# Udev-Regel entfernen
+sudo rm /etc/udev/rules.d/99-play-music.rules
 
-echo "Removing udev rules..."
-sudo rm /etc/udev/rules.d/99-usb-autmount.rules
+# Skript zum Abspielen der Musik entfernen
+sudo rm /usr/local/bin/play_music.sh
 
-echo "Removing crontab entry..."
-crontab -l | grep -v '@reboot python3 /usr/local/bin/play_music.py' | crontab -
+# Pakete deinstallieren
+sudo apt remove -y usbmount mpv
 
-echo "Uninstallation complete. Please reboot the system."
+# Udev-Dienst neu starten
+sudo udevadm control --reload-rules
+sudo systemctl restart udev
+
+echo "Deinstallation abgeschlossen."
